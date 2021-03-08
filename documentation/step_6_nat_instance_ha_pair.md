@@ -1,0 +1,1 @@
+# Step 6: Create NAT Instance HA Pair
