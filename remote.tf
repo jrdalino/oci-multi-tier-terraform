@@ -74,10 +74,20 @@ resource "null_resource" "compute-script1" {
       timeout     = "10m"
     }
     inline = [
-      "echo '== [dbinstance] Step 1. Install and run MySQL'",
-      "sudo -u root yum -y install mysql-server",
-      "sudo -u root yum -y service mysqld start",
-      "echo '== [dbinstance] Step 2: Set the root password for MySQL'",
+      "echo '== [dbinstance] Step 1. Install MySQL'",
+      "sudo -u root dnf install -y mysql-server",
+
+      "echo '== [dbinstance] Step 2. Run MySQL'",
+      "sudo -u root systemctl start mysqld.service",
+      "sudo -u root systemctl enable mysqld",
+      "sudo -u root systemctl status mysqld",      
+
+      "echo '== [dbinstance] Step 3. Allow MySQL port in the local iptables firewall.'",
+      "sudo -u root firewall-cmd --zone=public --add-port=3306/tcp --permanent",
+      "sudo -u root firewall-cmd --reload",
+
+      "echo '== [dbinstance] Step 4: Set the root password for MySQL'",
+      "echo '== Example: mysql -u root -h 10.0.1.2 -p'"
       ]
   }  
 

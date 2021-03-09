@@ -7,7 +7,7 @@ resource "oci_core_instance" "dbinstance" {
 
   source_details {
     source_type             = "image"
-    source_id               = "ocid1.image.oc1.phx.aaaaaaaagomxh6kz5w2qyowz4bovjwcplqwemlvx6xu67slgq4bd7d7sdnoq" # https://docs.oracle.com/en-us/iaas/images/centos-6x/
+    source_id               = "ocid1.image.oc1.phx.aaaaaaaa45germv4cefdox4doioklz6lepe4auzr7ooaxyfn4tneikwzofsa" # https://docs.oracle.com/en-us/iaas/images/centos-8x/
     boot_volume_size_in_gbs = "50"
   }
 
