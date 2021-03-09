@@ -30,8 +30,7 @@ resource "null_resource" "compute-script1" {
       "sudo -u root /sbin/service iptables save",
 
       "echo '== [webinstance1] Step 4. Install MySQL Shell.'",
-      "sudo -u root yum -y install mysql",
-      "echo '== Example: mysql -u USER-NAME-HERE -h MYSQL-DB-SERVER-IP-ADDRESS-HERE -p DB-NAME'"
+      "sudo -u root yum -y install mysql"
       ]
   } 
 
@@ -58,8 +57,7 @@ resource "null_resource" "compute-script1" {
       "sudo -u root /sbin/service iptables save",
 
       "echo '== [webinstance2] Step 4. Install MySQL Shell.'",
-      "sudo -u root yum -y install mysql",
-      "echo '== Example: mysql -u USER-NAME-HERE -h MYSQL-DB-SERVER-IP-ADDRESS-HERE -p DB-NAME'"
+      "sudo -u root yum -y install mysql"
       ]
   }  
 
@@ -75,20 +73,28 @@ resource "null_resource" "compute-script1" {
     }
     inline = [
       "echo '== [dbinstance] Step 1. Install MySQL'",
+      "sudo -u root yum -y update all",      
       "sudo -u root dnf install -y mysql-server",
 
       "echo '== [dbinstance] Step 2. Run MySQL'",
-      "sudo -u root systemctl start mysqld.service",
+      "sudo -u root systemctl start mysqld",
       "sudo -u root systemctl enable mysqld",
-      "sudo -u root systemctl status mysqld",      
+      "sudo -u root systemctl status mysqld",           
+      "sudo -u root systemctl restart mysqld",
 
-      "echo '== [dbinstance] Step 3. Allow MySQL port in the local iptables firewall.'",
+      "echo '== [dbinstance] Step 3. Add DB User'",
+      CREATE USER 'jrdalino'@'%' IDENTIFIED BY '';
+      GRANT ALL PRIVILEGES ON *.* TO 'jrdalino'@'%';
+      FLUSH PRIVILEGES;
+      SELECT host FROM mysql.user WHERE user = "jrdalino";
+
+      "echo '== [dbinstance] Step 4. Allow MySQL port in the local iptables firewall.'",
       "sudo -u root firewall-cmd --zone=public --add-port=3306/tcp --permanent",
+      "sudo -u root firewall-cmd --zone=public --add-port=3306/udp --permanent",      
       "sudo -u root firewall-cmd --reload",
 
       "echo '== [dbinstance] Step 4: Set the root password for MySQL'",
-      "echo '== Example: mysql -u user -h 10.0.1.2 -p'"
+      "echo '== Example: mysql -u jrdalino -h 10.0.1.2 -p'"
       ]
   }  
-
 }

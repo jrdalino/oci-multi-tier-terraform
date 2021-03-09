@@ -14,8 +14,8 @@
 - [Step 1: Setup OCI terraform](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_1_OCI_terraform_setup.md) 
 - [Step 2: Create Compartment](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_2_compartment.md)
 - [Step 3: Setup Networking](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_3_networking.md)
-- [Step 4: Setup Database - IN PROGESS](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_4_database.md)
-- [Step 5: Setup Web Servers - IN PROGESS](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_5_web_server.md)
+- [Step 4: Setup Database](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_4_database.md)
+- [Step 5: Setup Web Servers](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_5_web_server.md)
 - [Step 6: Setup NAT Instance HA Pair - IN PROGESS](https://github.com/jrdalino/oci-multi-tier-terraform/blob/main/documentation/step_6_nat_instance_ha_pair.md)
 
 ## References
