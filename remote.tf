@@ -87,7 +87,7 @@ resource "null_resource" "compute-script1" {
       "sudo -u root firewall-cmd --reload",
 
       "echo '== [dbinstance] Step 4: Set the root password for MySQL'",
-      "echo '== Example: mysql -u root -h 10.0.1.2 -p'"
+      "echo '== Example: mysql -u user -h 10.0.1.2 -p'"
       ]
   }  
 
