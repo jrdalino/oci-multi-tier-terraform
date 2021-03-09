@@ -13,8 +13,8 @@ resource "oci_core_instance" "webinstance1" {
 
   create_vnic_details {
     assign_public_ip = true
-    subnet_id = oci_core_subnet.snpub.id
-    nsg_ids = [oci_core_network_security_group.webnsg.id]
+    subnet_id        = oci_core_subnet.snpub.id
+    nsg_ids          = [oci_core_network_security_group.webnsg.id]
   }
 
   metadata = {
@@ -41,8 +41,8 @@ resource "oci_core_instance" "webinstance2" {
 
   create_vnic_details {
     assign_public_ip = true
-    subnet_id = oci_core_subnet.snpub.id
-    nsg_ids = [oci_core_network_security_group.webnsg.id]
+    subnet_id        = oci_core_subnet.snpub.id
+    nsg_ids          = [oci_core_network_security_group.webnsg.id]
   }
 
   metadata = {

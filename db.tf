@@ -13,8 +13,8 @@ resource "oci_core_instance" "dbinstance" {
 
   create_vnic_details {
     assign_public_ip = false
-    subnet_id = oci_core_subnet.snpriv.id
-    nsg_ids = [oci_core_network_security_group.dbnsg.id]
+    subnet_id        = oci_core_subnet.snpriv.id
+    nsg_ids          = [oci_core_network_security_group.dbnsg.id]
   }
 
   metadata = {
