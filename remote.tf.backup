@@ -123,12 +123,12 @@ resource "null_resource" "compute-script1" {
 
 # NAT Instance Testing
 
-# Step 1: SSH to DB Server >> DONE
+# Step 1: SSH to DB Server
 
 # ssh -i jrdalino.pem opc@129.146.79.28
 # ssh -i jrdalino.pem opc@10.0.1.2
 
-# Step 2: Test Outbound Internet Access >> DONE
+# Step 2: Test Outbound Internet Access. You should have access.
 
 # $ ping 8.8.8.8
 # PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
@@ -139,12 +139,10 @@ resource "null_resource" "compute-script1" {
 # 2 packets transmitted, 2 received, 0% packet loss, time 2ms
 # rtt min/avg/max/mdev = 9.474/9.841/10.208/0.367 ms
 
-# Step 3: Delete NAT Gateway
+# Step 3: Private Subnet Route Table - Remove NAT Gateway Rule
+# Step 4: Test Outbound Internet Access. No Access.
 
-# Step 4: Test Outbound Internet Access
-
-# Step 5: Modify Private Subnet Route Table to point to NAT Instance instead of NAT Gateway
-
-# Congratulations. Your Nat Instances now works!
+# Step 5: Private Subnet Route Table - Add NAT Instance Rule
+# Step 6: Test Outbound Internet Access. You should have access again.
 
 # TODO: Use pacemaker and corosync to have HA (failover) of NAT instance
