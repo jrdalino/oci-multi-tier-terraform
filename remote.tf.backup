@@ -96,5 +96,55 @@ resource "null_resource" "compute-script1" {
       "echo '== [dbinstance] Step 4: Set the root password for MySQL'",
       "echo '== Example: mysql -u jrdalino -h 10.0.1.2 -p'"
       ]
-  }  
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "opc"
+      host        = oci_core_instance.natinstance1.public_ip
+      private_key = tls_private_key.public_private_key_pair.private_key_pem
+      script_path = "/home/opc/myssh.sh"
+      agent       = false
+      timeout     = "10m"
+    }
+    inline = [
+      "echo '== [natinstance1] Step 1. Create file to be used when enabling ip forwarding'",
+      "sudo -u root echo ""net.ipv4.ip_forward = 1"" > /etc/sysctl.d/98-ip-forward.conf",
+      "echo '== [natinstance1] Step 2. Run firewall commands to enable masquerading and port forwarding'",
+      "sudo -u root firewall-offline-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -o ens3 -j MASQUERADE",
+      "sudo -u root firewall-offline-cmd --direct --add-rule ipv4 filter FORWARD 0 -i ens3 -j ACCEPT",
+      "sudo -u root /bin/systemctl restart firewalld",
+      "echo '== [natinstance1] Step 3. Enable ip forwarding by setting sysctl kernel parameter'",
+      "sudo -u root sysctl -p /etc/sysctl.d/98-ip-forward.conf"
+      ]
+  }
 }
+
+# NAT Instance Testing
+
+# Step 1: SSH to DB Server >> DONE
+
+# ssh -i jrdalino.pem opc@129.146.79.28
+# ssh -i jrdalino.pem opc@10.0.1.2
+
+# Step 2: Test Outbound Internet Access >> DONE
+
+# $ ping 8.8.8.8
+# PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+# 64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=10.2 ms
+# 64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time=9.47 ms
+# ^C
+# --- 8.8.8.8 ping statistics ---
+# 2 packets transmitted, 2 received, 0% packet loss, time 2ms
+# rtt min/avg/max/mdev = 9.474/9.841/10.208/0.367 ms
+
+# Step 3: Delete NAT Gateway
+
+# Step 4: Test Outbound Internet Access
+
+# Step 5: Modify Private Subnet Route Table to point to NAT Instance instead of NAT Gateway
+
+# Congratulations. Your Nat Instances now works!
+
+# TODO: Use pacemaker and corosync to have HA (failover) of NAT instance
