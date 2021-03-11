@@ -110,7 +110,7 @@ resource "null_resource" "compute-script1" {
     }
     inline = [
       "echo '== [natinstance1] Step 1. Create file to be used when enabling ip forwarding'",
-      "sudo -u root echo ""net.ipv4.ip_forward = 1"" > /etc/sysctl.d/98-ip-forward.conf",
+      "sudo -u root echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/98-ip-forward.conf",
       "echo '== [natinstance1] Step 2. Run firewall commands to enable masquerading and port forwarding'",
       "sudo -u root firewall-offline-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -o ens3 -j MASQUERADE",
       "sudo -u root firewall-offline-cmd --direct --add-rule ipv4 filter FORWARD 0 -i ens3 -j ACCEPT",
@@ -121,7 +121,9 @@ resource "null_resource" "compute-script1" {
   }
 }
 
+# **********************************************************************
 # NAT Instance Testing
+# **********************************************************************
 
 # Step 1: SSH to DB Server
 
@@ -145,4 +147,69 @@ resource "null_resource" "compute-script1" {
 # Step 5: Private Subnet Route Table - Add NAT Instance Rule
 # Step 6: Test Outbound Internet Access. You should have access again.
 
-# TODO: Use pacemaker and corosync to have HA (failover) of NAT instance
+# **********************************************************************
+# Use Pacemaker and Corosync to have HA (failover) of NAT instance
+# **********************************************************************
+
+# Step 1: Create 2 Nodes (2 NAT Instances above) & Pre-Configure Floating IPs > 10.0.0.254 >> DONE
+$ sudo -u root ip addr add 10.0.0.254/24 brd 10.0.0.255 dev ens3 label ens3
+# $ sudo -u root ip addr del 10.0.0.254/24 dev ens3
+
+# Step 2:  Install OCI CLI >> DONE
+$ sudo bash
+$ bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
+$ sudo ln -s /home/opc/bin/oci /usr/bin/oci
+$ oci setup config # /home/opc/.oci/jrdalino.pem 
+$ oci iam compartment list --all
+
+# Step 3: Install & Configure Corosync/Pacemaker Cluster (stonith, quorum, resources, constraints, etc) >> DONE
+$ sudo bash
+$ yum -y install pacemaker pcs resource-agents
+$ systemctl start pcsd.service
+$ systemctl enable pcsd.service
+$ echo ChangeMe1234$ | passwd --stdin hacluster
+$ firewall-cmd --permanent --add-service=high-availability
+$ firewall-cmd --reload
+
+# Step 4: Backup & Update IPaddr2 configuration file >> DONE
+$ cp /usr/lib/ocf/resource.d/heartbeat/IPaddr2 /usr/lib/ocf/resource.d/heartbeat/IPaddr2.ORIG
+$ sudo bash
+sed -i '64i\##### OCI vNIC variables\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '65i\server="`hostname -s`"\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '66i\node1vnic="ocid1.vnic.oc1.phx.abyhqljsko67lhkvdvy7z7y6tv5k5ds2u2mp265s2yynobt3hrc6ousg5vta"\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '67i\node2vnic="ocid1.vnic.oc1.phx.abyhqljszffumuhn73plig4dlbjuu4ftk4nhhjq7okah573gyhtihw4qs7pq"\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '68i\vnicip="10.0.0.254"\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+
+sed -i '614i\##### OCI/IPaddr Integration\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '615i\ if [ $server = "nat-server-1" ]; then\' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '616i\ /root/bin/oci network vnic assign-private-ip --unassign-if-already-assigned --vnic-id $node1vnic  --ip-address $vnicip \' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '617i\ else \' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '618i\ /root/bin/oci network vnic assign-private-ip --unassign-if-already-assigned --vnic-id $node2vnic  --ip-address $vnicip \' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+sed -i '619i\ fi \' /usr/lib/ocf/resource.d/heartbeat/IPaddr2
+
+# Step 5: Configure & Validate the cluster. Run on Node1 only >> DONE
+$ sudo bash
+pcs cluster auth nat-server-1 nat-server-2 -u hacluster -p ChangeMe1234$ --force
+pcs cluster setup --force --name virtualrouter nat-server-1 nat-server-2
+pcs cluster start --all
+pcs property set stonith-enabled=false
+pcs property set no-quorum-policy=ignore
+pcs resource defaults migration-threshold=1
+pcs resource create Cluster_VIP ocf:heartbeat:IPaddr2 ip=10.0.0.254 cidr_netmask=24 op monitor interval=20s
+systemctl enable pacemaker
+systemctl enable corosync
+pcs status
+
+# Step 6: Check out Pacemaker Corosync UI >> DONE
+https://129.146.79.28:2224/managec/pacemaker1/main#/resources/Cluster_VIP
+
+# Step 7: Simulate failover >> DONE
+nat-server-1: $ ip address show
+nat-server-2: $ ip address show
+db-server:    $ ping 10.0.0.254
+nat-server-1: $ pcs status
+nat-server-1: $ pcs resource move Cluster_VIP nat-server-2
+nat-server-1: $ pcs status
+db-server:    $ ping 10.0.0.254
+nat-server-2: $ address show
+nat-server-1: $ ip address show
